@@ -60,12 +60,13 @@ now_if_args(function()
 		"nix",
 		"typescript",
 		"javascript",
-		"csharp",
+		"c_sharp",
 		"tsx",
 		"jsx",
 		"rust",
 		"go",
 		"python",
+		"dockerfile",
 		-- Add here more languages with which you want to use tree-sitter
 		-- To see available languages:
 		-- - Execute `:=require('nvim-treesitter').get_available()`
@@ -152,6 +153,8 @@ later(function()
 end)
 
 now(function()
+	add({ "https://github.com/oskarnurm/koda.nvim.git" })
+	require("koda").setup()
 	vim.cmd("colorscheme koda")
 end)
 
