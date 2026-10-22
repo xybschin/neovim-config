@@ -97,7 +97,8 @@ end)
 --
 -- Here Neovim itself is a client (see `:h vim.lsp`). Language servers need to
 -- be installed separately based on your OS, CLI tools, and preferences.
--- See python about 'mason.nvim' at the bottom of the file.
+-- Note: install them with your system package manager or with a helper like
+-- 'mason.nvim' (see https://github.com/mason-org/mason.nvim).
 --
 -- Neovim's team collects commonly used configurations for most language servers
 -- inside 'neovim/nvim-lspconfig' plugin.

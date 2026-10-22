@@ -21,8 +21,8 @@ end
 
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
-nmap("[p", '<Cmd>exe "put! " . v:register<CR>', "Paste Above")
-nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
+nmap("[p", '<Cmd>exe "iput! " . v:register<CR>', "Paste Above")
+nmap("]p", '<Cmd>exe "iput "  . v:register<CR>', "Paste Below")
 
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
@@ -53,9 +53,8 @@ nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
 -- Create a global table with information about Leader groups in certain modes.
 -- This is used to provide 'mini.clue' with extra clues.
 -- Add an entry if you create a new group.
-_G.Config.leader_group_clues = {
+Config.leader_group_clues = {
 	{ mode = "n", keys = "<Leader>b", desc = "+Buffer" },
-	{ mode = "n", keys = "<Leader>c", desc = "+ClaudeCode" },
 	{ mode = "n", keys = "<Leader>e", desc = "+Explore/Edit" },
 	{ mode = "n", keys = "<Leader>f", desc = "+Find" },
 	{ mode = "n", keys = "<Leader>g", desc = "+Git" },
@@ -163,10 +162,6 @@ nmap_leader("fS", '<Cmd>Pick lsp scope="document_symbol"<CR>', "Symbols document
 nmap_leader("fv", '<Cmd>Pick visit_paths cwd=""<CR>', "Visit paths (all)")
 nmap_leader("fV", "<Cmd>Pick visit_paths<CR>", "Visit paths (cwd)")
 
-local nmap = function(lhs, rhs, desc)
-	-- See `:h vim.keymap.set()`
-	vim.keymap.set("n", lhs, rhs, { desc = desc })
-end
 -- g is for 'Git'. Common usage:
 -- - `<Leader>gs` - show information at cursor
 -- - `<Leader>go` - toggle 'mini.diff' overlay to show in-buffer unstaged changes
@@ -201,6 +196,7 @@ nmap_leader("ld", "<Cmd>lua vim.diagnostic.open_float()<CR>", "Diagnostic popup"
 nmap_leader("lf", '<Cmd>lua require("conform").format()<CR>', "Format")
 nmap_leader("li", "<Cmd>lua vim.lsp.buf.implementation()<CR>", "Implementation")
 nmap_leader("lh", "<Cmd>lua vim.lsp.buf.hover()<CR>", "Hover")
+nmap_leader("ll", "<Cmd>lua vim.lsp.codelens.run()<CR>", "Lens")
 nmap_leader("lr", "<Cmd>lua vim.lsp.buf.rename()<CR>", "Rename")
 nmap_leader("lR", "<Cmd>lua vim.lsp.buf.references()<CR>", "References")
 nmap_leader("ls", "<Cmd>lua vim.lsp.buf.definition()<CR>", "Source definition")
@@ -227,11 +223,13 @@ nmap_leader("oz", "<Cmd>lua MiniMisc.zoom()<CR>", "Zoom toggle")
 -- - `<Leader>sn` - start new session
 -- - `<Leader>sr` - read previously started session
 -- - `<Leader>sd` - delete previously started session
-local session_new = 'MiniSessions.write(vim.fn.input("Session name: "))'
+-- - `<Leader>sR` - restart Neovim preserving current session
+local session_new = 'vim.ui.input({ prompt = "Session name: " }, MiniSessions.write)'
 
 nmap_leader("sd", '<Cmd>lua MiniSessions.select("delete")<CR>', "Delete")
 nmap_leader("sn", "<Cmd>lua " .. session_new .. "<CR>", "New")
 nmap_leader("sr", '<Cmd>lua MiniSessions.select("read")<CR>', "Read")
+nmap_leader("sR", "<Cmd>lua MiniSessions.restart()<CR>", "Restart")
 nmap_leader("sw", "<Cmd>lua MiniSessions.write()<CR>", "Write current")
 
 -- t is for 'Terminal'
@@ -259,9 +257,6 @@ nmap_leader("vL", "<Cmd>lua MiniVisits.remove_label()<CR>", "Remove label")
 
 nmap("<Esc>", "<cmd>nohlsearch<CR>")
 tmap("<Esc><Esc>", "<C-\\><C-n>", "Exit terminal mode")
-
-nmap_leader("cc", "<Cmd>ClaudeCode<CR>", "Claude Code")
-nmap_leader("cr", "<Cmd>ClaudeCodeResume<CR>", "Claude Code: Resume")
 
 vim.api.nvim_create_user_command("W", "w", {})
 vim.api.nvim_create_user_command("Q", "q", {})

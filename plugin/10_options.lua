@@ -10,6 +10,10 @@
 --
 -- Option values can be customized on per buffer or window basis.
 -- See 'after/ftplugin/' for common example.
+--
+-- Notes:
+-- - Some options (like `:h 'exrc'`) need to be set before this file is sourced.
+--   Set them directly at the bottom of the 'init.lua' file.
 
 -- General ====================================================================
 vim.g.mapleader = " " -- Use `<Space>` as <Leader> key
@@ -21,12 +25,6 @@ vim.o.undofile = true -- Enable persistent undo
 vim.o.termguicolors = true -- Enables 24-bit RGB color in the TUI
 
 vim.o.shada = "'100,<50,s10,:1000,/100,@100,h" -- Limit ShaDa file (for startup)
-
--- Enable all filetype plugins and syntax (if not enabled, for better startup)
-vim.cmd("filetype plugin indent on")
-if vim.fn.exists("syntax_on") ~= 1 then
-	vim.cmd("syntax enable")
-end
 
 -- UI =========================================================================
 vim.o.breakindent = true -- Indent wrapped lines to match line start
@@ -95,7 +93,7 @@ vim.o.completeopt = "menuone,noselect,fuzzy,nosort" -- Use custom behavior
 local f = function()
 	vim.cmd("setlocal formatoptions-=c formatoptions-=o")
 end
-_G.Config.new_autocmd("FileType", nil, f, "Proper 'formatoptions'")
+Config.new_autocmd("FileType", nil, f, "Proper 'formatoptions'")
 
 -- There are other autocommands created by 'mini.basics'. See 'plugin/30_mini.lua'.
 
@@ -138,6 +136,3 @@ vim.filetype.add({
 		["docker%-compose%.ya?ml"] = "yaml.docker-compose",
 	},
 })
-
-vim.o.exrc = true
-vim.o.secure = true

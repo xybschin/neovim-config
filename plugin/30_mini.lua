@@ -86,29 +86,6 @@ now(function()
 	later(MiniIcons.tweak_lsp_kind)
 end)
 
--- Miscellaneous small but useful functions. Example usage:
--- - `<Leader>oz` - toggle between "zoomed" and regular view of current buffer
--- - `<Leader>or` - resize window to its "editable width"
--- - `:lua put_text(vim.lsp.get_clients())` - put output of a function below
---   cursor in current buffer. Useful for a detailed exploration.
--- - `:lua put(MiniMisc.stat_summary(MiniMisc.bench_time(f, 100)))` - run
---   function `f` 100 times and report statistical summary of execution times
---
--- Uses `now()` for `setup_xxx()` to work when started like `nvim -- path/to/file`
-now_if_args(function()
-	-- Makes `:h MiniMisc.put()` and `:h MiniMisc.put_text()` public
-	require("mini.misc").setup()
-
-	-- Change current working directory based on the current file path. It
-	-- searches up the file tree until the first root marker ('.git' or 'Makefile')
-	-- and sets their parent directory as a current directory.
-	-- This is helpful when simultaneously dealing with files from several projects.
-	MiniMisc.setup_auto_root()
-
-	-- Restore latest cursor position on file open
-	MiniMisc.setup_restore_cursor()
-end)
-
 -- Notifications provider. Shows all kinds of notifications in the upper right
 -- corner (by default). Example usage:
 -- - `:h vim.notify()` - show notification (hides automatically)
@@ -142,6 +119,21 @@ now(function()
 	require("mini.starter").setup()
 end)
 
+-- Statuscolumn. Sets `:h 'statuscolumn'` for improved window's left column.
+-- Example usage:
+-- - Shows differently in active and inactive windows. By default, with separator
+--   and dimmed respectively.
+-- - Reorders main sections (line number, folds, and signs) for a more efficient
+--   use of space.
+-- - Shows extra indication for virtual and wrapped lines.
+--
+-- See also:
+-- - `:h MiniStatuscolumn.config` - general overview of available configuration.
+-- - `:h MiniStatuscolumn.gen_content.main()` - simplified content customization.
+now(function()
+	require("mini.statuscolumn").setup()
+end)
+
 -- Statusline. Sets `:h 'statusline'` to show more info in a line below window.
 -- Example usage:
 -- - Left most section indicates current mode (text + highlighting).
@@ -161,6 +153,91 @@ end)
 -- Buffers are ordered as they were created. Navigate with `[b` and `]b`.
 now(function()
 	require("mini.tabline").setup()
+end)
+
+-- Step one or two ============================================================
+-- Load now if Neovim is started like `nvim -- path/to/file`, otherwise - later.
+-- This ensures a correct behavior for files opened during startup.
+
+-- Completion and signature help. Implements async "two stage" autocompletion:
+-- - Based on attached LSP servers that support completion.
+-- - Fallback (based on built-in keyword completion) if there is no LSP candidates.
+--
+-- Example usage in Insert mode with attached LSP:
+-- - Start typing text that should be recognized by LSP (like variable name).
+-- - After 100ms a popup menu with candidates appears.
+-- - Press `<Tab>` / `<S-Tab>` to navigate down/up the list. These are set up
+--   in 'mini.keymap'. You can also use `<C-n>` / `<C-p>`.
+-- - During navigation there is an info window to the right showing extra info
+--   that the LSP server can provide about the candidate. It appears after the
+--   candidate stays selected for 100ms. Use `<C-f>` / `<C-b>` to scroll it.
+-- - Navigating to an entry also changes buffer text. If you are happy with it,
+--   keep typing after it. To discard completion completely, press `<C-e>`.
+-- - After pressing special trigger(s), usually `(`, a window appears that shows
+--   the signature of the current function/method. It gets updated as you type
+--   showing the currently active parameter.
+--
+-- Example usage in Insert mode without an attached LSP or in places not
+-- supported by the LSP (like comments):
+-- - Start typing a word that is present in current or opened buffers.
+-- - After 100ms popup menu with candidates appears.
+-- - Navigate with `<Tab>` / `<S-Tab>` or `<C-n>` / `<C-p>`. This also updates
+--   buffer text. If happy with choice, keep typing. Stop with `<C-e>`.
+--
+-- It also works with snippet candidates provided by LSP server. Best experience
+-- when paired with 'mini.snippets' (which is set up in this file).
+now_if_args(function()
+	-- Customize post-processing of LSP responses for a better user experience.
+	-- Don't show 'Text' suggestions (usually noisy) and show snippets last.
+	local process_items_opts = { kind_priority = { Text = -1, Snippet = 99 } }
+	local process_items = function(items, base)
+		return MiniCompletion.default_process_items(items, base, process_items_opts)
+	end
+	require("mini.completion").setup({
+		lsp_completion = {
+			-- Without this config autocompletion is set up through `:h 'completefunc'`.
+			-- Although not needed, setting up through `:h 'omnifunc'` is cleaner
+			-- (sets up only when needed) and makes it possible to use `<C-u>`.
+			source_func = "omnifunc",
+			auto_setup = false,
+			process_items = process_items,
+		},
+	})
+
+	-- Set 'omnifunc' for LSP completion only when needed.
+	local on_attach = function(ev)
+		vim.bo[ev.buf].omnifunc = "v:lua.MiniCompletion.completefunc_lsp"
+	end
+	Config.new_autocmd("LspAttach", nil, on_attach, "Set 'omnifunc'")
+
+	-- Advertise to servers that Neovim now supports certain set of completion and
+	-- signature features through 'mini.completion'.
+	vim.lsp.config("*", { capabilities = MiniCompletion.get_lsp_capabilities() })
+end)
+
+-- Miscellaneous small but useful functions. Example usage:
+-- - `<Leader>oz` - toggle between "zoomed" and regular view of current buffer
+-- - `<Leader>or` - resize window to its "editable width"
+-- - `:lua put_text(vim.lsp.get_clients())` - put output of a function below
+--   cursor in current buffer. Useful for a detailed exploration.
+-- - `:lua put(MiniMisc.stat_summary(MiniMisc.bench_time(f, 100)))` - run
+--   function `f` 100 times and report statistical summary of execution times
+now_if_args(function()
+	-- Makes `:h MiniMisc.put()` and `:h MiniMisc.put_text()` public
+	require("mini.misc").setup()
+
+	-- Change current working directory based on the current file path. It
+	-- searches up the file tree until the first root marker ('.git' or 'Makefile')
+	-- and sets their parent directory as a current directory.
+	-- This is helpful when simultaneously dealing with files from several projects.
+	MiniMisc.setup_auto_root()
+
+	-- Restore latest cursor position on file open
+	MiniMisc.setup_restore_cursor()
+
+	-- Synchronize terminal emulator background with Neovim's background to remove
+	-- possibly different color padding around Neovim instance
+	MiniMisc.setup_termbg_sync()
 end)
 
 -- Step two ===================================================================
@@ -338,7 +415,7 @@ end)
 -- - `:h MiniColors.interactive()` - interactively tweak color scheme
 -- - `:h MiniColors-recipes` - common recipes to use during interactive tweaking
 -- - `:h MiniColors.convert()` - convert between color spaces
--- - `:h MiniColors-color-spaces` - list of supported color sapces
+-- - `:h MiniColors-color-spaces` - list of supported color spaces
 --
 -- It is not enabled by default because it is not really needed on a daily basis.
 -- Uncomment next line (use `gcc`) to enable.
@@ -355,62 +432,6 @@ end)
 -- still enabled as it provides more customization opportunities.
 later(function()
 	require("mini.comment").setup()
-end)
-
--- Completion and signature help. Implements async "two stage" autocompletion:
--- - Based on attached LSP servers that support completion.
--- - Fallback (based on built-in keyword completion) if there is no LSP candidates.
---
--- Example usage in Insert mode with attached LSP:
--- - Start typing text that should be recognized by LSP (like variable name).
--- - After 100ms a popup menu with candidates appears.
--- - Press `<Tab>` / `<S-Tab>` to navigate down/up the list. These are set up
---   in 'mini.keymap'. You can also use `<C-n>` / `<C-p>`.
--- - During navigation there is an info window to the right showing extra info
---   that the LSP server can provide about the candidate. It appears after the
---   candidate stays selected for 100ms. Use `<C-f>` / `<C-b>` to scroll it.
--- - Navigating to an entry also changes buffer text. If you are happy with it,
---   keep typing after it. To discard completion completely, press `<C-e>`.
--- - After pressing special trigger(s), usually `(`, a window appears that shows
---   the signature of the current function/method. It gets updated as you type
---   showing the currently active parameter.
---
--- Example usage in Insert mode without an attached LSP or in places not
--- supported by the LSP (like comments):
--- - Start typing a word that is present in current or opened buffers.
--- - After 100ms popup menu with candidates appears.
--- - Navigate with `<Tab>` / `<S-Tab>` or `<C-n>` / `<C-p>`. This also updates
---   buffer text. If happy with choice, keep typing. Stop with `<C-e>`.
---
--- It also works with snippet candidates provided by LSP server. Best experience
--- when paired with 'mini.snippets' (which is set up in this file).
-later(function()
-	-- Customize post-processing of LSP responses for a better user experience.
-	-- Don't show 'Text' suggestions (usually noisy) and show snippets last.
-	local process_items_opts = { kind_priority = { Text = -1, Snippet = 99 } }
-	local process_items = function(items, base)
-		return MiniCompletion.default_process_items(items, base, process_items_opts)
-	end
-	require("mini.completion").setup({
-		lsp_completion = {
-			-- Without this config autocompletion is set up through `:h 'completefunc'`.
-			-- Although not needed, setting up through `:h 'omnifunc'` is cleaner
-			-- (sets up only when needed) and makes it possible to use `<C-u>`.
-			source_func = "omnifunc",
-			auto_setup = false,
-			process_items = process_items,
-		},
-	})
-
-	-- Set 'omnifunc' for LSP completion only when needed.
-	local on_attach = function(ev)
-		vim.bo[ev.buf].omnifunc = "v:lua.MiniCompletion.completefunc_lsp"
-	end
-	_G.Config.new_autocmd("LspAttach", nil, on_attach, "Set 'omnifunc'")
-
-	-- Advertise to servers that Neovim now supports certain set of completion and
-	-- signature features through 'mini.completion'.
-	vim.lsp.config("*", { capabilities = MiniCompletion.get_lsp_capabilities() })
 end)
 
 -- Autohighlight word under cursor with a customizable delay.
@@ -490,6 +511,33 @@ end)
 -- - `:h MiniIndentscope.gen_animation` - available animation rules
 later(function()
 	require("mini.indentscope").setup()
+end)
+
+-- Customizable user input. Improves how Neovim and plugins ask for input.
+-- By default shows a floating window with the input prompt as title. Window
+-- position depends on the input scope: at cursor, window or editor bottom left.
+--
+-- When asked for input:
+-- - Type it. Note: this is not a regular Insert mode, but rather a customizable
+--   and comprehensive Command-line mode emulation (it allows returning a value).
+-- - Press `<Tab>` to show completion, `<C-p>` - previous history entry.
+-- - Press `<CR>` to accept or `<Esc>` to cancel.
+--
+-- Example usage (usually works together with other plugins and modules):
+-- - `saiwf` and type a function name to wrap a word with 'mini.surround'
+-- - `<Leader>lr` and type a new value to use with LSP rename
+-- - `<Leader>fg` + `<C-o>` and type a custom filter glob for `grep_live` picker
+-- - `:h vim.ui.input()` - implemented with 'mini.input'.
+--   Like after typing `<Leader>sn` to create a session asks for its name.
+--
+-- See also:
+-- - `:h MiniInput.default_key()` - default special keys available when typing
+-- - `:h MiniInput-examples` - general customization examples
+-- - `:h MiniInput.gen_view` - bundled view customizations (adjust how floating
+--   window is shown or use statusline/tabline/winbar/virtual text)
+-- - `:h MiniInput-lifecycle` - details about how a custom mode emulation works
+later(function()
+	require("mini.input").setup()
 end)
 
 -- Jump to next/previous single character. It implements "smarter `fFtT` keys"
@@ -581,14 +629,14 @@ end)
 later(function()
 	require("mini.move").setup({
 		mappings = {
-      left = "<C-h>",
-      right = "<C-l>",
-      down = "<C-j>",
-      up = "<C-k>",
-      line_left = "",
-      line_right = "",
-      line_down = "",
-      line_up = "",
+			left = "<C-h>",
+			right = "<C-l>",
+			down = "<C-j>",
+			up = "<C-k>",
+			line_left = "",
+			line_right = "",
+			line_down = "",
+			line_up = "",
 		},
 	})
 end)
@@ -622,6 +670,19 @@ later(function()
 	-- Usage: when on `a` in `(aa, bb)` press `)` followed by `(`.
 	vim.keymap.set("n", "(", "gxiagxila", { remap = true, desc = "Swap arg left" })
 	vim.keymap.set("n", ")", "gxiagxina", { remap = true, desc = "Swap arg right" })
+end)
+
+-- Autopairs functionality. Insert pair when typing opening character and go over
+-- right character if it is already to cursor's right. Also provides mappings for
+-- `<CR>` and `<BS>` to perform extra actions when inside pair.
+-- Example usage in Insert mode:
+-- - `(` - insert "()" and put cursor between them
+-- - `)` when there is ")" to the right - jump over ")" without inserting new one
+-- - `<C-v>(` - always insert a single "(" literally. This is useful since
+--   'mini.pairs' doesn't provide particularly smart behavior, like auto balancing
+later(function()
+	-- Create pairs not only in Insert, but also in Command line mode
+	require("mini.pairs").setup({ modes = { command = true } })
 end)
 
 -- Pick anything with single window layout and fast matching. This is one of
