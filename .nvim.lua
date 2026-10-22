@@ -3,7 +3,7 @@
 -- └──────────────────────────────┘
 --
 -- Language servers are enabled per project instead of globally. See
--- ':h project-config', ':h exrc' and 'plugin/45_project_config.lua'.
+-- ':h project-config' and ':h 'exrc''.
 --
 -- This repository contains Lua code, so enable 'lua_ls' for it.
 --
@@ -21,5 +21,14 @@ vim.lsp.config("lua_ls", {
 			-- 'vim' is Neovim's global API namespace.
 			diagnostics = { globals = { "vim" } },
 		},
+	},
+})
+
+-- Formatters are configured per project as well. The global setup in
+-- 'plugin/40_plugins.lua' does not set any formatter, so this is the only
+-- place where they are defined.
+require("conform").setup({
+	formatters_by_ft = {
+		lua = { "stylua" },
 	},
 })

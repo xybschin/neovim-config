@@ -103,6 +103,11 @@ end
 -- Load now to have 'mini.misc' available for custom loading helpers.
 vim.pack.add({ "https://github.com/nvim-mini/mini.nvim" })
 
+-- 'conform.nvim' - formatters. Load now (not in 'plugin/40_plugins.lua') to
+-- make it requirable from project config files: those are sourced by Neovim's
+-- 'exrc' mechanism before 'plugin/' files (see ':h project-config').
+vim.pack.add({ "https://github.com/stevearc/conform.nvim" })
+
 -- Loading helpers used to organize config into fail-safe parts. Example usage:
 -- - `now` - execute immediately. Use for what must be executed during startup.
 --   Like colorscheme, statusline, tabline, dashboard, etc.

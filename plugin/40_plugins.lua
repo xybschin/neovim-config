@@ -122,9 +122,16 @@ end)
 -- They can be used to configure external programs, but it might become tedious.
 --
 -- The 'stevearc/conform.nvim' plugin is a good and maintained solution for easier
--- formatting setup.
+-- formatting setup. It is installed in 'init.lua' so that it can be used from
+-- project config files.
+--
+-- NOTE: the list of formatters is *not* set here. Every project defines the
+-- formatters it needs in its own project config file (see ':h project-config').
+-- Only options that are the same for every project are set here.
+--
+-- The setup is done late on purpose: it runs after the project config file
+-- (which sets the formatters) and so does not replace it.
 later(function()
-	add({ "https://github.com/stevearc/conform.nvim" })
 	require("conform").setup({
 		default_format_opts = {
 			lsp_format = "fallback",
@@ -132,18 +139,6 @@ later(function()
 		format_on_save = {
 			timeout_ms = 500,
 			lsp_format = "fallback",
-		},
-		formatters_by_ft = {
-			lua = { "stylua" },
-			sh = { "beautysh" },
-			yaml = { "yamlfmt" },
-			json = { "prettier" },
-			javascript = { "prettier" },
-			javascriptreact = { "prettier" },
-			typescript = { "prettier" },
-			typescriptreact = { "prettier" },
-			go = { "gofmt", "goimports" },
-			nix = { "nixfmt" },
 		},
 	})
 end)
