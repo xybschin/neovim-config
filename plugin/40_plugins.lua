@@ -107,20 +107,12 @@ end)
 now_if_args(function()
 	add({ "https://github.com/neovim/nvim-lspconfig" })
 
-	-- Use `:h vim.lsp.enable()` to automatically enable language server based on
-	-- the rules provided by 'nvim-lspconfig'.
-	-- Use `:h vim.lsp.config()` or 'after/lsp/' directory to configure servers.
-	-- Uncomment and tweak the following `vim.lsp.enable()` call to enable servers.
-	vim.lsp.enable({
-		"lua_ls",
-		"omnisharp",
-		"bashls",
-		"nil_ls",
-		"docker_language_server",
-		"gols",
-		"ts_ls",
-		"tailwindcss",
-	})
+	-- NOTE: language servers are NOT enabled here. Every project enables the
+	-- servers it needs in its own project-local config file. See
+	-- 'plugin/45_project_config.lua' for details.
+	--
+	-- Use `:h vim.lsp.enable()` to enable a language server, `:h vim.lsp.config()`
+	-- or 'after/lsp/' directory to configure servers.
 end)
 
 -- Formatting =================================================================
