@@ -1,15 +1,30 @@
 { pkgs, ... }:
+
 {
   # Language server for this repository's own Lua files. See '.nvim.lua'.
   languages.lua.enable = true;
 
+  # Keep the standalone editor configuration aligned with the tools declared in
+  # ../nvim.nix. Tree-sitter compiles parsers locally, so it needs a C compiler.
   packages = with pkgs; [
-    # Linter for the Nix files in this repository.
+    neovim-unwrapped
+    git
+    ripgrep
+    gcc
+
+    # Language servers
     nil
-    # Formatter for the Nix files in this repository.
+    bash-language-server
+    cmake-language-server
+    docker-language-server
+    typescript-language-server
+    tailwindcss-language-server
+
+    # Tree-sitter and formatters
+    tree-sitter
     nixfmt
-    # Formatter for the Lua files in this repository. It is also used by
-    # 'conform.nvim' (see 'plugin/40_plugins.lua').
+    prettier
+    beautysh
     stylua
   ];
 
