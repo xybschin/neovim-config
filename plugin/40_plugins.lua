@@ -57,10 +57,15 @@ now_if_args(function()
 		"lua",
 		"vimdoc",
 		"markdown",
-		-- These need 'tree-sitter' CLI + a C compiler to build (see nvim.nix)
+		"nix",
 		"typescript",
+		"javascript",
+		"csharp",
 		"tsx",
-		"css",
+		"jsx",
+		"rust",
+		"go",
+		"python",
 		-- Add here more languages with which you want to use tree-sitter
 		-- To see available languages:
 		-- - Execute `:=require('nvim-treesitter').get_available()`
@@ -137,7 +142,6 @@ later(function()
 			lsp_format = "fallback",
 		},
 		format_on_save = {
-			timeout_ms = 500,
 			lsp_format = "fallback",
 		},
 	})
@@ -148,8 +152,6 @@ later(function()
 end)
 
 now(function()
-	add({ "https://github.com/oskarnurm/koda.nvim.git" })
-	require("koda").setup()
 	vim.cmd("colorscheme koda")
 end)
 
