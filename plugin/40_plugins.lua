@@ -10,7 +10,7 @@
 
 -- Make concise helpers for installing/adding plugins in two stages
 local add = vim.pack.add
-local now_if_args, later = Config.now_if_args, Config.later
+local now, now_if_args, later = Config.now, Config.now_if_args, Config.later
 
 -- Tree-sitter ================================================================
 
@@ -55,6 +55,18 @@ now_if_args(function()
     'lua',
     'vimdoc',
     'markdown',
+    -- These need 'tree-sitter' CLI + a C compiler to build (see 'nvim.nix')
+    'nix',
+    'typescript',
+    'javascript',
+    'c_sharp',
+    'tsx',
+    'jsx',
+    'css',
+    'rust',
+    'go',
+    'python',
+    'dockerfile',
     -- Add here more languages with which you want to use tree-sitter
     -- To see available languages:
     -- - Execute `:=require('nvim-treesitter').get_available()`
@@ -102,10 +114,16 @@ now_if_args(function()
   -- Use `:h vim.lsp.enable()` to automatically enable language server based on
   -- the rules provided by 'nvim-lspconfig'.
   -- Use `:h vim.lsp.config()` or 'after/lsp/' directory to configure servers.
-  -- Uncomment and tweak the following `vim.lsp.enable()` call to enable servers.
-  -- vim.lsp.enable({
-  --   -- For example, if `lua-language-server` is installed, use `'lua_ls'` entry
-  -- })
+  vim.lsp.enable({
+    'lua_ls',
+    'omnisharp',
+    'bashls',
+    'nil_ls',
+    'docker_language_server',
+    'gopls',
+    'ts_ls',
+    'tailwindcss',
+  })
 end)
 
 -- Formatting =================================================================
@@ -128,9 +146,25 @@ later(function()
       -- Allow formatting from LSP server if no dedicated formatter is available
       lsp_format = 'fallback',
     },
+    -- Format on save, falling back to LSP if no dedicated formatter is available
+    format_on_save = {
+      timeout_ms = 500,
+      lsp_format = 'fallback',
+    },
     -- Map of filetype to formatters
     -- Make sure that necessary CLI tool is available
-    -- formatters_by_ft = { lua = { 'stylua' } },
+    formatters_by_ft = {
+      lua = { 'stylua' },
+      sh = { 'beautysh' },
+      yaml = { 'yamlfmt' },
+      json = { 'prettier' },
+      javascript = { 'prettier' },
+      javascriptreact = { 'prettier' },
+      typescript = { 'prettier' },
+      typescriptreact = { 'prettier' },
+      go = { 'gofmt', 'goimports' },
+      nix = { 'nixfmt' },
+    },
   })
 end)
 
@@ -144,6 +178,35 @@ end)
 -- 'mini.snippets' is designed to work with it as seamlessly as possible.
 -- See `:h MiniSnippets.gen_loader.from_lang()`.
 later(function() add({ 'https://github.com/rafamadriz/friendly-snippets' }) end)
+
+-- Color scheme ===============================================================
+
+-- 'koda.nvim' - the color scheme used by this config.
+-- See 'plugin/30_mini.lua' for 'mini.hues' based alternatives.
+now(function()
+  add({ 'https://github.com/oskarnurm/koda.nvim.git' })
+  require('koda').setup()
+  vim.cmd('colorscheme koda')
+end)
+
+-- File explorer ==============================================================
+
+-- 'dired.nvim' - directory browser used by `<Leader>ed`, `<Leader>ef`, and `:Ex`.
+now(function()
+  add({
+    'https://github.com/X3eRo0/dired.nvim',
+    'https://github.com/MunifTanjim/nui.nvim',
+  })
+
+  require('dired').setup({
+    path_separator = '/',
+    show_banner = false,
+    show_icons = false,
+    show_hidden = true,
+    show_dot_dirs = true,
+    show_colors = true,
+  })
+end)
 
 -- Honorable mentions =========================================================
 
@@ -161,8 +224,8 @@ later(function() add({ 'https://github.com/rafamadriz/friendly-snippets' }) end)
 -- end)
 
 -- Beautiful, usable, well maintained color schemes outside of 'mini.nvim' and
--- have full support of its highlight groups. Use if you don't like 'miniwinter'
--- enabled in 'plugin/30_mini.lua' or other suggested 'mini.hues' based ones.
+-- have full support of its highlight groups. Use if you don't like 'koda'
+-- enabled in 'plugin/40_plugins.lua' or 'mini.hues' ones in 'plugin/30_mini.lua'.
 -- Config.now(function()
 --  -- Install only those that you need
 --  add({
