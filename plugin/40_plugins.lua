@@ -10,7 +10,7 @@
 
 -- Make concise helpers for installing/adding plugins in two stages
 local add = vim.pack.add
-local now, now_if_args, later = Config.now, Config.now_if_args, Config.later
+local now_if_args, later = Config.now_if_args, Config.later
 
 -- Tree-sitter ================================================================
 
@@ -38,60 +38,44 @@ local now, now_if_args, later = Config.now, Config.now_if_args, Config.later
 --   with `:TSInstall <language>`. Be sure to have necessary system dependencies
 --   (see MiniMax README section for software requirements).
 now_if_args(function()
-	-- Define hook to update tree-sitter parsers after plugin is updated
-	local ts_update = function()
-		vim.cmd("TSUpdate")
-	end
-	Config.on_packchanged("nvim-treesitter", { "update" }, ts_update, ":TSUpdate")
+  -- Define hook to update tree-sitter parsers after plugin is updated
+  local ts_update = function() vim.cmd('TSUpdate') end
+  Config.on_packchanged('nvim-treesitter', { 'update' }, ts_update, ':TSUpdate')
 
-	add({
-		"https://github.com/nvim-treesitter/nvim-treesitter",
-		"https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
-	})
+  add({
+    'https://github.com/nvim-treesitter/nvim-treesitter',
+    'https://github.com/nvim-treesitter/nvim-treesitter-textobjects',
+  })
 
-	-- Define languages which will have parsers installed and auto enabled
-	-- After changing this, restart Neovim once to install necessary parsers. Wait
-	-- for the installation to finish before opening a file for added language(s).
-	local languages = {
-		-- These are already pre-installed with Neovim. Used as an example.
-		"lua",
-		"vimdoc",
-		"markdown",
-		"nix",
-		"typescript",
-		"javascript",
-		"c_sharp",
-		"tsx",
-		"jsx",
-		"rust",
-		"go",
-		"python",
-		"dockerfile",
-		-- Add here more languages with which you want to use tree-sitter
-		-- To see available languages:
-		-- - Execute `:=require('nvim-treesitter').get_available()`
-		-- - Visit 'SUPPORTED_LANGUAGES.md' file at
-		--   https://github.com/nvim-treesitter/nvim-treesitter/blob/main
-	}
-	local isnt_installed = function(lang)
-		return #vim.api.nvim_get_runtime_file("parser/" .. lang .. ".*", false) == 0
-	end
-	local to_install = vim.tbl_filter(isnt_installed, languages)
-	if #to_install > 0 then
-		require("nvim-treesitter").install(to_install)
-	end
+  -- Define languages which will have parsers installed and auto enabled
+  -- After changing this, restart Neovim once to install necessary parsers. Wait
+  -- for the installation to finish before opening a file for added language(s).
+  local languages = {
+    -- These are already pre-installed with Neovim. Used as an example.
+    'lua',
+    'vimdoc',
+    'markdown',
+    -- Add here more languages with which you want to use tree-sitter
+    -- To see available languages:
+    -- - Execute `:=require('nvim-treesitter').get_available()`
+    -- - Visit 'SUPPORTED_LANGUAGES.md' file at
+    --   https://github.com/nvim-treesitter/nvim-treesitter/blob/main
+  }
+  local isnt_installed = function(lang)
+    return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
+  end
+  local to_install = vim.tbl_filter(isnt_installed, languages)
+  if #to_install > 0 then require('nvim-treesitter').install(to_install) end
 
-	-- Enable tree-sitter after opening a file for a target language
-	local filetypes = {}
-	for _, lang in ipairs(languages) do
-		for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
-			table.insert(filetypes, ft)
-		end
-	end
-	local ts_start = function(ev)
-		vim.treesitter.start(ev.buf)
-	end
-	Config.new_autocmd("FileType", filetypes, ts_start, "Start tree-sitter")
+  -- Enable tree-sitter after opening a file for a target language
+  local filetypes = {}
+  for _, lang in ipairs(languages) do
+    for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
+      table.insert(filetypes, ft)
+    end
+  end
+  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
+  Config.new_autocmd('FileType', filetypes, ts_start, 'Start tree-sitter')
 end)
 
 -- Language servers ===========================================================
@@ -103,22 +87,25 @@ end)
 --
 -- Here Neovim itself is a client (see `:h vim.lsp`). Language servers need to
 -- be installed separately based on your OS, CLI tools, and preferences.
--- Note: install them with your system package manager or with a helper like
--- 'mason.nvim' (see https://github.com/mason-org/mason.nvim).
+-- See note about 'mason.nvim' at the bottom of the file.
 --
 -- Neovim's team collects commonly used configurations for most language servers
 -- inside 'neovim/nvim-lspconfig' plugin.
 --
 -- Add it now if file (and not 'mini.starter') is shown after startup.
+--
+-- Troubleshooting:
+-- - Run `:checkhealth vim.lsp` to see potential issues.
 now_if_args(function()
-	add({ "https://github.com/neovim/nvim-lspconfig" })
+  add({ 'https://github.com/neovim/nvim-lspconfig' })
 
-	-- NOTE: language servers are NOT enabled here. Every project enables the
-	-- servers it needs in its own project-local config file. See
-	-- 'plugin/45_project_config.lua' for details.
-	--
-	-- Use `:h vim.lsp.enable()` to enable a language server, `:h vim.lsp.config()`
-	-- or 'after/lsp/' directory to configure servers.
+  -- Use `:h vim.lsp.enable()` to automatically enable language server based on
+  -- the rules provided by 'nvim-lspconfig'.
+  -- Use `:h vim.lsp.config()` or 'after/lsp/' directory to configure servers.
+  -- Uncomment and tweak the following `vim.lsp.enable()` call to enable servers.
+  -- vim.lsp.enable({
+  --   -- For example, if `lua-language-server` is installed, use `'lua_ls'` entry
+  -- })
 end)
 
 -- Formatting =================================================================
@@ -128,48 +115,62 @@ end)
 -- They can be used to configure external programs, but it might become tedious.
 --
 -- The 'stevearc/conform.nvim' plugin is a good and maintained solution for easier
--- formatting setup. It is installed in 'init.lua' so that it can be used from
--- project config files.
---
--- NOTE: the list of formatters is *not* set here. Every project defines the
--- formatters it needs in its own project config file (see ':h project-config').
--- Only options that are the same for every project are set here.
---
--- The setup is done late on purpose: it runs after the project config file
--- (which sets the formatters) and so does not replace it.
+-- formatting setup.
 later(function()
-	require("conform").setup({
-		default_format_opts = {
-			lsp_format = "fallback",
-		},
-		format_on_save = {
-			lsp_format = "fallback",
-		},
-	})
+  add({ 'https://github.com/stevearc/conform.nvim' })
+
+  -- See also:
+  -- - `:h Conform`
+  -- - `:h conform-options`
+  -- - `:h conform-formatters`
+  require('conform').setup({
+    default_format_opts = {
+      -- Allow formatting from LSP server if no dedicated formatter is available
+      lsp_format = 'fallback',
+    },
+    -- Map of filetype to formatters
+    -- Make sure that necessary CLI tool is available
+    -- formatters_by_ft = { lua = { 'stylua' } },
+  })
 end)
 
-later(function()
-	add({ "https://github.com/rafamadriz/friendly-snippets" })
-end)
+-- Snippets ===================================================================
 
-now(function()
-	add({ "https://github.com/oskarnurm/koda.nvim.git" })
-	require("koda").setup()
-	vim.cmd("colorscheme koda")
-end)
+-- Although 'mini.snippets' provides functionality to manage snippet files, it
+-- deliberately doesn't come with those.
+--
+-- The 'rafamadriz/friendly-snippets' is currently the largest collection of
+-- snippet files. They are organized in 'snippets/' directory (mostly) per language.
+-- 'mini.snippets' is designed to work with it as seamlessly as possible.
+-- See `:h MiniSnippets.gen_loader.from_lang()`.
+later(function() add({ 'https://github.com/rafamadriz/friendly-snippets' }) end)
 
-now(function()
-	add({
-		"https://github.com/X3eRo0/dired.nvim",
-		"https://github.com/MunifTanjim/nui.nvim",
-	})
+-- Honorable mentions =========================================================
 
-	require("dired").setup({
-		path_separator = "/",
-		show_banner = false,
-		show_icons = false,
-		show_hidden = true,
-		show_dot_dirs = true,
-		show_colors = true,
-	})
-end)
+-- 'mason-org/mason.nvim' (a.k.a. "Mason") is a great tool (package manager) for
+-- installing external language servers, formatters, and linters. It provides
+-- a unified interface for installing, updating, and deleting such programs.
+--
+-- The caveat is that these programs will be set up to be mostly used inside Neovim.
+-- If you need them to work elsewhere, consider using other package managers.
+--
+-- You can use it like so:
+-- now_if_args(function()
+--   add({ 'https://github.com/mason-org/mason.nvim' })
+--   require('mason').setup()
+-- end)
+
+-- Beautiful, usable, well maintained color schemes outside of 'mini.nvim' and
+-- have full support of its highlight groups. Use if you don't like 'miniwinter'
+-- enabled in 'plugin/30_mini.lua' or other suggested 'mini.hues' based ones.
+-- Config.now(function()
+--  -- Install only those that you need
+--  add({
+--    'https://github.com/sainnhe/everforest',
+--    'https://github.com/Shatur/neovim-ayu',
+--    'https://github.com/ellisonleao/gruvbox.nvim',
+--  })
+--
+--   -- Enable only one
+--   vim.cmd('color everforest')
+-- end)
